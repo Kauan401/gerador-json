@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prescrição Digital - CFM</title>
+  <style>
+    :root {
+      --verde-principal: #0f5132;
+      --verde-medio: #1a8c4a;
+      --verde-claro: #2eb567;
+      --verde-suave: #d4efdd;
+      --verde-borda: #a8d9ba;
+      --branco: #ffffff;
+      --borda: #c8e6d2;
+      --texto: #0f2e1c;
+      --texto-suave: #2d5a3d;
+      --sucesso-bg: #c9f0d6;
+      --sucesso-borda: #1a8c4a;
+      --erro-bg: #fdeaea;
+      --erro-borda: #c0392b;
+      --azul: #1a4d8c;
+    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+    body {
+      background: linear-gradient(135deg, #0a3d26 0%, #0f5132 50%, #1a8c4a 100%);
+      min-height: 100vh; margin: 0;
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 0;
+    }
+
+    .gov-header {
+      width: 100%; background: var(--branco);
+      border-bottom: 3px solid var(--verde-medio);
+      padding: 14px 30px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap;
+    }
+    .gov-header-left { display: flex; align-items: center; gap: 16px; }
+    .gov-header-left img { height: 48px; object-fit: contain; }
+    .gov-header-right { display: flex; align-items: center; gap: 20px; }
+    .gov-header-right img { height: 42px; object-fit: contain; }
+
+    .logos-bar {
+      width: 100%; background: var(--verde-suave);
+      padding: 14px 30px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 40px; border-bottom: 3px solid var(--verde-medio);
+      flex-wrap: wrap;
+    }
+    .logos-bar img { height: 52px; object-fit: contain; }
+    .logos-bar .divider { width: 2px; height: 44px; background: var(--verde-borda); }
+
+    .main-layout {
+      width: 100%; max-width: 1700px;
+      display: grid; grid-template-columns: 1fr 520px;
+      gap: 24px; padding: 26px 30px; align-items: start;
+    }
+
+    .container {
+      width: 100%; background: var(--branco);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      padding: 30px 34px 36px;
+      border-top: 6px solid var(--verde-medio);
+      border-radius: 8px;
+    }
+
+    .titulo-principal {
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--verde-principal);
+      margin: 0 0 6px 0;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .titulo-principal::before {
+      content: ""; display: inline-block;
+      width: 7px; height: 26px;
+      background: var(--verde-medio); border-radius: 2px;
+    }
+    .subtitulo {
+      color: var(--texto-suave); font-size: 0.92rem;
+      margin: 0 0 24px 0; padding-left: 19px;
+    }
+
+    fieldset {
+      border: 2px solid var(--verde-borda);
+      border-radius: 8px; padding: 18px 22px 22px;
+      margin-bottom: 20px; background: #f4fbf7;
+    }
+    legend {
+      font-weight: 700; color: var(--verde-principal);
+      padding: 0 12px; font-size: 1rem;
+      background: var(--branco); border-radius: 4px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* Toggle Receita / Atestado */
+    .tipo-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      background: #f4fbf7;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid var(--verde-borda);
+    }
+    .tipo-toggle button {
+      flex: 1;
+      padding: 13px 18px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--verde-principal);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .tipo-toggle button:hover {
+      background: var(--verde-suave);
+    }
+    .tipo-toggle button.ativo {
+      background: var(--verde-medio);
+      color: var(--branco);
+      border-color: var(--verde-principal);
+      box-shadow: 0 3px 10px rgba(26, 140, 74, 0.4);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px 16px; margin-top: 4px;
+    }
+    .field { display: flex; flex-direction: column; }
+    .field label {
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; color: var(--verde-principal);
+      margin-bottom: 4px; letter-spacing: 0.5px;
+    }
+    .field input, .field select, .field textarea {
+      padding: 10px 13px;
+      border: 1.5px solid var(--borda);
+      border-radius: 6px; font-size: 0.93rem;
+      background: var(--branco); outline: none;
+      font-family: inherit; color: var(--texto);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--verde-medio);
+      box-shadow: 0 0 0 4px rgba(26, 140, 74, 0.22);
+    }
+    .field textarea { resize: vertical; min-height: 55px; }
+    .full-width { grid-column: 1 / -1; }
+
+    .input-com-botao { display: flex; gap: 8px; align-items: stretch; }
+    .input-com-botao input { flex: 1; }
+    .btn-gerar-chave {
+      background: var(--verde-medio); color: var(--branco);
+      border: none; padding: 0 18px; border-radius: 6px;
+      font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-gerar-chave:hover { background: var(--verde-principal); }
+
+    .actions {
+      display: flex; justify-content: flex-end;
+      gap: 12px; margin-top: 18px; flex-wrap: wrap;
+    }
+    .btn-primary {
+      background: var(--verde-medio); color: var(--branco);
+      border: none; padding: 13px 30px; border-radius: 6px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 3px 10px rgba(26, 140, 74, 0.4);
+    }
+    .btn-primary:hover { background: var(--verde-principal); }
+    .btn-secondary {
+      background: var(--branco);
+      border: 2px solid var(--verde-medio);
+      color: var(--verde-principal);
+      padding: 11px 22px; border-radius: 6px;
+      font-weight: 700; cursor: pointer; font-size: 0.93rem;
+    }
+    .btn-secondary:hover { background: var(--verde-suave); }
+    .btn-copy {
+      background: var(--verde-medio); color: var(--branco);
+      border: none; padding: 9px 20px; border-radius: 6px;
+      font-weight: 700; cursor: pointer; font-size: 0.86rem;
+    }
+    .btn-copy:hover { background: var(--verde-principal); }
+
+    .feedback {
+      margin-top: 20px; padding: 13px 18px;
+      border-radius: 6px; font-weight: 600;
+      display: none; font-size: 0.93rem;
+      border-left: 5px solid;
+    }
+    .feedback.success { background: var(--sucesso-bg); border-left-color: var(--sucesso-borda); color: #0a3d26; display: block; }
+    .feedback.error { background: var(--erro-bg); border-left-color: var(--erro-borda); color: #7f1d1d; display: block; }
+
+    .output-block { margin-top: 20px; display: none; }
+    .output-block.show { display: block; }
+    .output-label {
+      font-weight: 700; color: var(--verde-principal);
+      margin-bottom: 6px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.94rem;
+    }
+    .output-pre {
+      background: #052a18; color: #9fe6b8;
+      padding: 18px 22px; border-radius: 8px;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 0.82rem; white-space: pre; overflow: auto;
+      border: 2px solid var(--verde-medio);
+      max-height: 500px; line-height: 1.55;
+    }
+
+    .cfm-panel {
+      background: var(--branco);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      border-top: 6px solid var(--verde-medio);
+      padding: 20px 20px 18px; border-radius: 8px;
+      position: sticky; top: 16px;
+    }
+    .cfm-panel h2 {
+      font-size: 1.15rem; font-weight: 700;
+      color: var(--verde-principal);
+      margin: 0 0 4px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .cfm-panel h2::before {
+      content: ""; width: 6px; height: 20px;
+      background: var(--verde-medio); border-radius: 2px;
+    }
+    .cfm-panel .cfm-sub {
+      font-size: 0.85rem; color: var(--texto-suave);
+      margin: 0 0 12px 14px;
+    }
+    .cfm-panel .cfm-buttons {
+      display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .btn-cfm {
+      flex: 1; background: var(--verde-medio); color: var(--branco);
+      border: none; padding: 11px 14px; border-radius: 6px;
+      font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; text-decoration: none; text-align: center;
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px;
+    }
+    .btn-cfm:hover { background: var(--verde-principal); }
+    .btn-cfm.outline {
+      background: var(--branco); color: var(--verde-principal);
+      border: 2px solid var(--verde-medio);
+    }
+    .btn-cfm.outline:hover { background: var(--verde-suave); }
+
+    .cfm-frame-wrap {
+      border: 2px solid var(--verde-borda);
+      border-radius: 8px; overflow: hidden;
+      background: #f4fbf7; position: relative;
+      height: 780px;
+    }
+    .cfm-frame-wrap iframe {
+      width: 100%; height: 100%; border: 0; display: block;
+    }
+    .cfm-frame-fallback {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 24px;
+      color: var(--texto-suave); background: #f4fbf7;
+      gap: 10px; pointer-events: none; opacity: 0;
+      transition: opacity .2s;
+    }
+    .cfm-frame-fallback.show { opacity: 1; pointer-events: auto; }
+    .cfm-frame-fallback .ico { font-size: 2.4rem; }
+    .cfm-frame-fallback p { font-size: 0.88rem; margin: 0; max-width: 280px; line-height: 1.5; }
+    .cfm-hint {
+      font-size: 0.8rem; color: var(--texto-suave);
+      margin-top: 10px; line-height: 1.5;
+      padding-left: 12px; border-left: 3px solid var(--verde-borda);
+    }
+
+    .footer {
+      width: 100%; background: var(--verde-principal);
+      color: #cdebd8; padding: 18px 30px;
+      font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+      border-top: 4px solid var(--verde-claro);
+      font-weight: 500;
+    }
+    .footer .footer-logos { display: flex; align-items: center; gap: 18px; }
+    .footer img { height: 30px; filter: brightness(0) invert(1); opacity: 0.95; }
+
+    @media (max-width: 1200px) {
+      .main-layout { grid-template-columns: 1fr; padding: 18px; }
+      .cfm-panel { position: static; }
+      .cfm-frame-wrap { height: 620px; }
+    }
+    @media (max-width: 720px) {
+      .gov-header, .logos-bar, .footer, .main-layout { padding-left: 16px; padding-right: 16px; }
+      .container { padding: 22px 18px 26px; }
+      .gov-header-left img, .gov-header-right img { height: 32px; }
+      .logos-bar img { height: 36px; }
+      .footer img { height: 24px; }
+      .cfm-frame-wrap { height: 520px; }
+      .tipo-toggle { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="gov-header">
+    <div class="gov-header-left">
+      <img src="https://logodownload.org/wp-content/uploads/2023/01/governo-federal-2023-logo-lula.png" alt="Governo Federal">
+    </div>
+    <div class="gov-header-right">
+      <img src="https://sites.ufpe.br/especializacao/wp-content/uploads/sites/11/2019/12/logo-patria-amada-brasil-horizontal.png" alt="Pátria Amada Brasil">
+    </div>
+  </header>
+
+  <div class="logos-bar">
+    <img src="https://www.gov.br/iti/pt-br/canais_atendimento/imprensa/logo_iti.png" alt="ITI">
+    <div class="divider"></div>
+    <img src="https://i.ibb.co/vx9XSMrW/certificado.png" alt="ICP-Brasil">
+    <div class="divider"></div>
+    <img src="https://crmsc.org.br/wp-content/uploads/2023/04/CFM.png" alt="CFM">
+  </div>
+
+  <div class="main-layout">
+
+    <div class="container">
+      <h1 class="titulo-principal">Prescrição Digital</h1>
+      <p class="subtitulo">Geração de registro em conformidade com o CFM</p>
+
+      <!-- Toggle Receita / Atestado -->
+      <div class="tipo-toggle">
+        <button type="button" id="btnReceita" class="ativo" onclick="mudarTipo('receita')">
+          💊 Receita
+        </button>
+        <button type="button" id="btnAtestado" onclick="mudarTipo('atestado')">
+          📄 Atestado
+        </button>
+      </div>
+
+      <form id="formularioPaciente" novalidate>
+        <fieldset>
+          <legend>👤 Paciente</legend>
+          <div class="grid">
+            <div class="field full-width">
+              <label for="paciente_nome">Nome completo *</label>
+              <input type="text" id="paciente_nome" required>
+            </div>
+            <div class="field">
+              <label for="paciente_cpf">CPF *</label>
+              <input type="text" id="paciente_cpf" placeholder="000.000.000-00" required>
+            </div>
+            <div class="field">
+              <label for="paciente_dataNascimento">Data de nascimento *</label>
+              <input type="text" id="paciente_dataNascimento" placeholder="dd/mm/aaaa" required>
+            </div>
+            <div class="field">
+              <label for="paciente_cid">CID *</label>
+              <input type="text" id="paciente_cid" placeholder="J11" required>
+            </div>
+            <div class="field full-width">
+              <label for="paciente_observacoes">Observações *</label>
+              <textarea id="paciente_observacoes" placeholder="GRIPE." required></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>🩺 Médico</legend>
+          <div class="grid">
+            <div class="field full-width">
+              <label for="registro_chave">Chave do registro *</label>
+              <div class="input-com-botao">
+                <input type="text" id="registro_chave" placeholder="CFM-XX-XXXXXXXXX" required>
+                <button type="button" class="btn-gerar-chave" id="gerarChaveBtn" title="Gerar chave aleatória">
+                  🎲 Gerar
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="medico_nome">Nome *</label>
+              <input type="text" id="medico_nome" placeholder="Dr. Nome Completo" required>
+            </div>
+            <div class="field">
+              <label for="medico_crm">CRM *</label>
+              <input type="text" id="medico_crm" placeholder="CRM-AM 10359" required>
+            </div>
+            <div class="field full-width">
+              <label for="medico_especialidade">Especialidade *</label>
+              <input type="text" id="medico_especialidade" placeholder="INFECTOLOGIA." required>
+            </div>
+            <div class="field full-width">
+              <label for="medico_assinaturaDigital">Assinatura digital</label>
+              <input type="text" id="medico_assinaturaDigital" value="Assinado digitalmente">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- BLOCO RECEITA -->
+        <fieldset id="blocoReceita">
+          <legend>💊 Receita</legend>
+          <div class="grid">
+            <div class="field full-width">
+              <label for="atestato_unidade">Unidade *</label>
+              <input type="text" id="atestato_unidade" placeholder="UNIMED CUIABA">
+            </div>
+            <div class="field full-width">
+              <label for="atestato_medic">Medicamento *</label>
+              <input type="text" id="atestato_medic" placeholder="SERTRALINA 50MG">
+            </div>
+            <div class="field">
+              <label for="atestato_quanti">Quantidade *</label>
+              <input type="text" id="atestato_quanti" placeholder="1 CX / 30 CP">
+            </div>
+            <div class="field">
+              <label for="atestato_apre">Apresentação *</label>
+              <input type="text" id="atestato_apre" placeholder="COMPRIMIDOS REVESTIDOS">
+            </div>
+            <div class="field full-width">
+              <label for="atestato_poso">Posologia *</label>
+              <input type="text" id="atestato_poso" placeholder="TOMAR V.O">
+            </div>
+            <div class="field">
+              <label for="atestato_status">Status *</label>
+              <select id="atestato_status">
+                <option value="válido" selected>válido</option>
+                <option value="inválido">inválido</option>
+                <option value="pendente">pendente</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- BLOCO ATESTADO -->
+        <fieldset id="blocoAtestado" style="display:none;">
+          <legend>📄 Atestado</legend>
+          <div class="grid">
+            <div class="field full-width">
+              <label for="atestato_unidade_at">Unidade *</label>
+              <input type="text" id="atestato_unidade_at" placeholder="UPA José Rodrigues">
+            </div>
+            <div class="field">
+              <label for="atestado_dias">Dias de afastamento *</label>
+              <input type="number" id="atestado_dias" min="1" value="1" placeholder="1">
+            </div>
+            <div class="field">
+              <label for="atestado_inicio">Início afastamento *</label>
+              <input type="text" id="atestado_inicio" placeholder="dd/mm/aaaa">
+            </div>
+            <div class="field">
+              <label for="atestado_fim">Fim afastamento *</label>
+              <input type="text" id="atestado_fim" placeholder="dd/mm/aaaa">
+            </div>
+            <div class="field">
+              <label for="atestado_status">Status *</label>
+              <select id="atestado_status">
+                <option value="válido" selected>válido</option>
+                <option value="inválido">inválido</option>
+                <option value="pendente">pendente</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="button" class="btn-secondary" id="limparBtn">🧹 Limpar</button>
+          <button type="submit" class="btn-primary" id="btnGerar">📋 Gerar registro</button>
+        </div>
+      </form>
+
+      <div id="feedback" class="feedback"></div>
+
+      <div id="outputBlock" class="output-block">
+        <div class="output-label">
+          <span>📋 Bloco gerado — cole dentro de <code>"registros": [ ... ]</code></span>
+          <button type="button" class="btn-copy" id="copyBtn">📎 Copiar</button>
+        </div>
+        <pre id="outputPre" class="output-pre"></pre>
+      </div>
+    </div>
+
+    <aside class="cfm-panel">
+      <h2>Busca de Médicos — CFM</h2>
+      <p class="cfm-sub">Portal oficial do Conselho Federal de Medicina</p>
+
+      <div class="cfm-buttons">
+        <a class="btn-cfm" href="https://portal.cfm.org.br/busca-medicos" target="_blank" rel="noopener">
+          🔗 Abrir em nova aba
+        </a>
+        <button type="button" class="btn-cfm outline" id="reloadCfm">🔄 Recarregar</button>
+      </div>
+
+      <div class="cfm-frame-wrap">
+        <iframe
+          id="cfmFrame"
+          src="https://portal.cfm.org.br/busca-medicos"
+          title="Busca de Médicos CFM"
+          referrerpolicy="no-referrer-when-downgrade"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+          loading="lazy"></iframe>
+
+        <div class="cfm-frame-fallback" id="cfmFallback">
+          <div class="ico">🛡️</div>
+          <p><strong>O CFM bloqueia exibição em iframe</strong> por segurança (anti-clickjacking).</p>
+          <p>Use o botão <strong>“🔗 Abrir em nova aba”</strong> acima para buscar no portal oficial.</p>
+        </div>
+      </div>
+
+      <div class="cfm-hint">
+        💡 Dica: pesquise por <strong>UF</strong>, <strong>cidade</strong> e <strong>especialidade</strong> no portal.
+        Depois copie <em>nome</em> e <em>CRM</em> para o formulário ao lado.
+      </div>
+    </aside>
+
+  </div>
+
+  <footer class="footer">
+    <span>© Prescrição Digital CFM — Todos os direitos reservados</span>
+    <div class="footer-logos">
+      <img src="https://www.gov.br/iti/pt-br/canais_atendimento/imprensa/logo_iti.png" alt="ITI">
+      <img src="https://i.ibb.co/vx9XSMrW/certificado.png" alt="ICP-Brasil">
+      <img src="https://crmsc.org.br/wp-content/uploads/2023/04/CFM.png" alt="CFM">
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      // ============================================================
+      // ESTADO GLOBAL
+      // ============================================================
+      let TIPO_ATUAL = 'receita'; // 'receita' ou 'atestado'
+
+      const form = document.getElementById('formularioPaciente');
+      const feedbackDiv = document.getElementById('feedback');
+      const outputBlock = document.getElementById('outputBlock');
+      const outputPre = document.getElementById('outputPre');
+      const copyBtn = document.getElementById('copyBtn');
+      const limparBtn = document.getElementById('limparBtn');
+      const btnGerar = document.getElementById('btnGerar');
+
+      const blocoReceita = document.getElementById('blocoReceita');
+      const blocoAtestado = document.getElementById('blocoAtestado');
+      const btnReceita = document.getElementById('btnReceita');
+      const btnAtestado = document.getElementById('btnAtestado');
+
+      const cfmFrame = document.getElementById('cfmFrame');
+      const cfmFallback = document.getElementById('cfmFallback');
+      const reloadCfm = document.getElementById('reloadCfm');
+
+      const registroChaveInput = document.getElementById('registro_chave');
+      const gerarChaveBtn = document.getElementById('gerarChaveBtn');
+
+      // ============================================================
+      // TOGGLE RECEITA / ATESTADO
+      // ============================================================
+      window.mudarTipo = function(tipo) {
+        TIPO_ATUAL = tipo;
+
+        if (tipo === 'receita') {
+          btnReceita.classList.add('ativo');
+          btnAtestado.classList.remove('ativo');
+          blocoReceita.style.display = '';
+          blocoAtestado.style.display = 'none';
+          btnGerar.textContent = '📋 Gerar receita';
+        } else {
+          btnAtestado.classList.add('ativo');
+          btnReceita.classList.remove('ativo');
+          blocoReceita.style.display = 'none';
+          blocoAtestado.style.display = '';
+          btnGerar.textContent = '📋 Gerar atestado';
+        }
+
+        // Limpa o output ao trocar
+        outputBlock.classList.remove('show');
+        feedbackDiv.style.display = 'none';
+      };
+
+      // ============================================================
+      // UTILITÁRIOS
+      // ============================================================
+      function gerarChave() {
+        const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numeros = '0123456789';
+        const letra1 = letras[Math.floor(Math.random() * letras.length)];
+        const num1 = Math.floor(Math.random() * 10);
+        let bloco = '';
+        for (let i = 0; i < 4; i++) bloco += letras[Math.floor(Math.random() * letras.length)];
+        for (let i = 0; i < 3; i++) bloco += numeros[Math.floor(Math.random() * numeros.length)];
+        bloco += letras[Math.floor(Math.random() * letras.length)];
+        bloco += numeros[Math.floor(Math.random() * numeros.length)];
+        return `CFM-${letra1}${num1}-${bloco}`;
+      }
+
+      function dataAtual() {
+        const d = new Date();
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+      }
+
+      function somarDias(dataStr, dias) {
+        const [dia, mes, ano] = dataStr.split('/').map(Number);
+        const d = new Date(ano, mes - 1, dia);
+        d.setDate(d.getDate() + dias);
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+      }
+
+      // ============================================================
+      // MONTA REGISTRO — RECEITA
+      // ============================================================
+      function montarRegistroReceita() {
+        const v = id => document.getElementById(id).value.trim();
+
+        const chaveRegistro = v('registro_chave');
+        const pacienteNome = v('paciente_nome');
+        const pacienteCpf = v('paciente_cpf');
+        const pacienteDataNasc = v('paciente_dataNascimento');
+        const pacienteCid = v('paciente_cid');
+        const pacienteObs = v('paciente_observacoes');
+
+        const medicoNome = v('medico_nome');
+        const medicoCrm = v('medico_crm');
+        const medicoEspecialidade = v('medico_especialidade');
+        const medicoAssinatura = v('medico_assinaturaDigital') || 'Assinado digitalmente';
+
+        const atestatoUnidade = v('atestato_unidade');
+        const atestatoMedic = v('atestato_medic');
+        const atestatoQuanti = v('atestato_quanti');
+        const atestatoApre = v('atestato_apre');
+        const atestatoPoso = v('atestato_poso');
+        const atestatoStatus = document.getElementById('atestato_status').value;
+
+        if (!chaveRegistro ||
+            !pacienteNome || !pacienteCpf || !pacienteDataNasc || !pacienteCid || !pacienteObs ||
+            !medicoNome || !medicoCrm || !medicoEspecialidade ||
+            !atestatoUnidade || !atestatoMedic || !atestatoQuanti ||
+            !atestatoApre || !atestatoPoso) {
+          return null;
+        }
+
+        return {
+          chave: chaveRegistro,
+          data: dataAtual(),
+          paciente: {
+            nome: pacienteNome,
+            cpf: pacienteCpf,
+            dataNascimento: pacienteDataNasc,
+            cid: pacienteCid,
+            observacoes: pacienteObs
+          },
+          medico: {
+            nome: medicoNome,
+            crm: medicoCrm,
+            especialidade: medicoEspecialidade,
+            assinaturaDigital: medicoAssinatura
+          },
+          atestato: {
+            unidade: atestatoUnidade,
+            medic: atestatoMedic,
+            quanti: atestatoQuanti,
+            apre: atestatoApre,
+            poso: atestatoPoso,
+            status: atestatoStatus
+          }
+        };
+      }
+
+      // ============================================================
+      // MONTA REGISTRO — ATESTADO
+      // ============================================================
+      function montarRegistroAtestado() {
+        const v = id => document.getElementById(id).value.trim();
+
+        const chaveRegistro = v('registro_chave');
+        const pacienteNome = v('paciente_nome');
+        const pacienteCpf = v('paciente_cpf');
+        const pacienteDataNasc = v('paciente_dataNascimento');
+        const pacienteCid = v('paciente_cid');
+        const pacienteObs = v('paciente_observacoes');
+
+        const medicoNome = v('medico_nome');
+        const medicoCrm = v('medico_crm');
+        const medicoEspecialidade = v('medico_especialidade');
+        const medicoAssinatura = v('medico_assinaturaDigital') || 'Assinado digitalmente';
+
+        const atestatoUnidade = v('atestato_unidade_at');
+        const dias = parseInt(document.getElementById('atestado_dias').value, 10);
+        const inicio = v('atestado_inicio');
+        const atestadoStatus = document.getElementById('atestado_status').value;
+
+        let fim = v('atestado_fim');
+        if (!fim && inicio && dias > 0) {
+          fim = somarDias(inicio, dias - 1);
+          document.getElementById('atestado_fim').value = fim;
+        }
+
+        if (!chaveRegistro ||
+            !pacienteNome || !pacienteCpf || !pacienteDataNasc || !pacienteCid || !pacienteObs ||
+            !medicoNome || !medicoCrm || !medicoEspecialidade ||
+            !atestatoUnidade || !dias || !inicio || !fim) {
+          return null;
+        }
+
+        return {
+          chave: chaveRegistro,
+          data: dataAtual(),
+          paciente: {
+            nome: pacienteNome,
+            cpf: pacienteCpf,
+            dataNascimento: pacienteDataNasc,
+            cid: pacienteCid,
+            observacoes: pacienteObs
+          },
+          medico: {
+            nome: medicoNome,
+            crm: medicoCrm,
+            especialidade: medicoEspecialidade,
+            assinaturaDigital: medicoAssinatura
+          },
+          atestato: {
+            unidade: atestatoUnidade,
+            diasAfastamento: dias,
+            inicioAfastamento: inicio,
+            fimAfastamento: fim,
+            status: atestadoStatus
+          }
+        };
+      }
+
+      // ============================================================
+      // GERAR BLOCO — RECEITA
+      // Formato exato:
+      // }
+      //     },
+      //
+      //     {
+      //         "chave": "...",
+      //       ...
+      //         "status": "..."
+      // ============================================================
+      function gerarBlocoReceita(registro) {
+        const data = registro.data;
+        const p = registro.paciente;
+        const m = registro.medico;
+        const a = registro.atestato;
+
+        let bloco = '';
+        bloco += '}\n';
+        bloco += '    },\n';
+        bloco += '    \n';
+        bloco += '    {\n';
+        bloco += `        "chave": "${registro.chave}",\n`;
+        bloco += `      "data": "${data}",\n`;
+        bloco += '\n';
+        bloco += '      "paciente": {\n';
+        bloco += `        "nome": "${p.nome}",\n`;
+        bloco += `        "cpf": "${p.cpf}",\n`;
+        bloco += `        "dataNascimento": "${p.dataNascimento}",\n`;
+        bloco += `        "cid": "${p.cid}",\n`;
+        bloco += `        "observacoes": "${p.observacoes}"\n`;
+        bloco += '      },\n';
+        bloco += '\n';
+        bloco += '      "medico": {\n';
+        bloco += `        "nome": "${m.nome}",\n`;
+        bloco += `        "crm": "${m.crm}",\n`;
+        bloco += `        "especialidade": "${m.especialidade}",\n`;
+        bloco += `        "assinaturaDigital": "${m.assinaturaDigital}"\n`;
+        bloco += '      },\n';
+        bloco += '\n';
+        bloco += '      "atestato": {\n';
+        bloco += `        "unidade": "${a.unidade}",\n`;
+        bloco += `      "medic": "${a.medic}",\n`;
+        bloco += `    "quanti": "${a.quanti}",\n`;
+        bloco += `      "apre": "${a.apre}",\n`;
+        bloco += `        "poso": "${a.poso}",\n`;
+        bloco += `        "status": "${a.status}"`;
+
+        return bloco;
+      }
+
+      // ============================================================
+      // GERAR BLOCO — ATESTADO
+      // MESMO FORMATO EXATO da receita, só mudam os campos do atestato
+      // ============================================================
+      function gerarBlocoAtestado(registro) {
+        const data = registro.data;
+        const p = registro.paciente;
+        const m = registro.medico;
+        const a = registro.atestato;
+
+        let bloco = '';
+        bloco += '}\n';
+        bloco += '    },\n';
+        bloco += '    \n';
+        bloco += '    {\n';
+        bloco += `        "chave": "${registro.chave}",\n`;
+        bloco += `      "data": "${data}",\n`;
+        bloco += '\n';
+        bloco += '      "paciente": {\n';
+        bloco += `        "nome": "${p.nome}",\n`;
+        bloco += `        "cpf": "${p.cpf}",\n`;
+        bloco += `        "dataNascimento": "${p.dataNascimento}",\n`;
+        bloco += `        "cid": "${p.cid}",\n`;
+        bloco += `        "observacoes": "${p.observacoes}"\n`;
+        bloco += '      },\n';
+        bloco += '\n';
+        bloco += '      "medico": {\n';
+        bloco += `        "nome": "${m.nome}",\n`;
+        bloco += `        "crm": "${m.crm}",\n`;
+        bloco += `        "especialidade": "${m.especialidade}",\n`;
+        bloco += `        "assinaturaDigital": "${m.assinaturaDigital}"\n`;
+        bloco += '      },\n';
+        bloco += '\n';
+        bloco += '      "atestato": {\n';
+        bloco += `        "unidade": "${a.unidade}",\n`;
+        bloco += `      "diasAfastamento": ${a.diasAfastamento},\n`;
+        bloco += `    "inicioAfastamento": "${a.inicioAfastamento}",\n`;
+        bloco += `      "fimAfastamento": "${a.fimAfastamento}",\n`;
+        bloco += `        "status": "${a.status}"`;
+
+        return bloco;
+      }
+
+      // ============================================================
+      // FEEDBACK / UI
+      // ============================================================
+      function mostrarFeedback(msg, tipo = 'success') {
+        feedbackDiv.textContent = msg;
+        feedbackDiv.className = `feedback ${tipo}`;
+        setTimeout(() => {
+          feedbackDiv.style.display = 'none';
+          feedbackDiv.className = 'feedback';
+        }, 5000);
+      }
+
+      gerarChaveBtn.addEventListener('click', () => {
+        registroChaveInput.value = gerarChave();
+        registroChaveInput.focus();
+        mostrarFeedback('🎲 Chave gerada com sucesso!', 'success');
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        if (!registroChaveInput.value) {
+          registroChaveInput.value = gerarChave();
+        }
+        // Preenche datas do atestado com hoje
+        const hoje = dataAtual();
+        const inputInicio = document.getElementById('atestado_inicio');
+        const inputFim = document.getElementById('atestado_fim');
+        if (inputInicio && !inputInicio.value) inputInicio.value = hoje;
+        if (inputFim && !inputFim.value) inputFim.value = hoje;
+      });
+
+      // ===== CFM iframe =====
+      let cfmLoaded = false;
+      cfmFrame.addEventListener('load', () => {
+        cfmLoaded = true;
+        cfmFallback.classList.remove('show');
+      });
+      setTimeout(() => {
+        if (!cfmLoaded) cfmFallback.classList.add('show');
+      }, 3000);
+
+      reloadCfm.addEventListener('click', () => {
+        cfmLoaded = false;
+        cfmFallback.classList.remove('show');
+        cfmFrame.src = 'about:blank';
+        setTimeout(() => {
+          cfmFrame.src = 'https://portal.cfm.org.br/busca-medicos';
+          setTimeout(() => {
+            if (!cfmLoaded) cfmFallback.classList.add('show');
+          }, 3000);
+        }, 100);
+      });
+
+      // ===== Auto-preenche fim do atestado =====
+      document.getElementById('atestado_dias').addEventListener('input', autoCalcularFim);
+      document.getElementById('atestado_inicio').addEventListener('input', autoCalcularFim);
+      function autoCalcularFim() {
+        const inicio = document.getElementById('atestado_inicio').value.trim();
+        const dias = parseInt(document.getElementById('atestado_dias').value, 10);
+        if (inicio && dias > 0 && /^\d{2}\/\d{2}\/\d{4}$/.test(inicio)) {
+          document.getElementById('atestado_fim').value = somarDias(inicio, dias - 1);
+        }
+      }
+
+      // ===== SUBMIT =====
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          mostrarFeedback('❌ Preencha todos os campos obrigatórios.', 'error');
+          return;
+        }
+
+        let registro, bloco, tipoNome;
+
+        if (TIPO_ATUAL === 'receita') {
+          registro = montarRegistroReceita();
+          if (!registro) {
+            mostrarFeedback('❌ Verifique os campos da receita.', 'error');
+            return;
+          }
+          bloco = gerarBlocoReceita(registro);
+          tipoNome = 'Receita';
+        } else {
+          registro = montarRegistroAtestado();
+          if (!registro) {
+            mostrarFeedback('❌ Verifique os campos do atestado.', 'error');
+            return;
+          }
+          bloco = gerarBlocoAtestado(registro);
+          tipoNome = 'Atestado';
+        }
+
+        outputPre.textContent = bloco;
+        outputBlock.classList.add('show');
+        mostrarFeedback(`✅ Bloco de ${tipoNome} gerado! Clique em "Copiar".`, 'success');
+        outputBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(outputPre.textContent);
+          mostrarFeedback('📎 Bloco copiado!', 'success');
+        } catch {
+          const range = document.createRange();
+          range.selectNode(outputPre);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+          document.execCommand('copy');
+          mostrarFeedback('📎 Bloco copiado (fallback).', 'success');
+        }
+      });
+
+      limparBtn.addEventListener('click', () => {
+        form.reset();
+        outputBlock.classList.remove('show');
+        feedbackDiv.style.display = 'none';
+        document.getElementById('medico_assinaturaDigital').value = 'Assinado digitalmente';
+        document.getElementById('atestato_status').value = 'válido';
+        document.getElementById('atestado_status').value = 'válido';
+        registroChaveInput.value = gerarChave();
+        const hoje = dataAtual();
+        document.getElementById('atestado_inicio').value = hoje;
+        document.getElementById('atestado_fim').value = hoje;
+      });
+    })();
+  </script>
+</body>
+</html>
